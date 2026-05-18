@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 from typing import Final, List
 from datetime import datetime
+from PassLogic import verify_password, create_access_token, User
 
 # 1. Define the Database Model
 class Post(SQLModel, table=True):
@@ -33,6 +34,10 @@ def get_session():
     with Session(engine) as session:
         yield session
 
+class Userlogin(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    username: str
+    hashed_password: str
 
 
 
@@ -76,3 +81,44 @@ def delete_post(post_id: int, session: Session = Depends(get_session)):
     session.delete(post)
     session.commit()
     return {"message": f"Post {post_id} successfully deleted"}
+
+
+
+@app.put("/posts/{post_id}", response_model=Post)
+def update_post(post_id: int, updated_data: Post, session: Session = Depends(get_session)):
+    """Update an existing post in the database."""
+    # Fetch the post from the database by ID
+    db_post = session.get(Post, post_id)
+    if not db_post:
+        raise HTTPException(status_code=404, detail="Post not found")
+        
+    # Overwrite old database values with new data from the request
+    db_post.title = updated_data.title
+    db_post.content = updated_data.content
+    db_post.author = updated_data.author
+    
+    # Save the updated object
+    session.add(db_post)
+    session.commit()
+    session.refresh(db_post)
+    
+    return db_post
+
+
+
+@app.post('/login', response_model=Userlogin)
+def log_in(user_data: Userlogin, session: Session = Depends(get_session)):
+    statement = select(User).where(User.username == user_data.username)
+    db_user = session.exec(statement).first()
+    
+    if not db_user:
+        raise HTTPException(status_code=400, detail="Incorrect username or password")    
+    
+    verified_password = verify_password(user_data.hashed_password, db_user.hashed_password)
+    if not verified_password:
+        raise HTTPException(status_code=400, detail="Incorrect username or password")
+    
+    token = create_access_token(data={"sub": db_user.username})
+    
+    # Return the token to the client
+    return {"access_token": token, "token_type": "bearer"}
