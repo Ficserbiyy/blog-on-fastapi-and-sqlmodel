@@ -11,10 +11,11 @@ from models import Post, User, UserCreate, Userlogin
 # Create tables on Startup
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # This code runs WHEN THE SERVER STARTS
+    # On Startup:
     create_db_and_tables()
     yield
-    # on Shutdown:
+    # On Shutdown:
+
 
 app: Final = FastAPI(lifespan=lifespan)
 
@@ -34,9 +35,22 @@ def create_post(post: Post, session: Session = Depends(get_session)):
 
 
 @app.get("/posts", response_model=List[Post])
-def get_posts(session: Session = Depends(get_session)):
-    """Retrieve all posts from the database."""
+def get_posts(
+    author: str | None = None,
+    limit: int = 5,
+    session: Session = Depends(get_session)
+):
+    """Retrieve posts with optional filtering by author and limit."""
+    # Basic get('/posts')
     statement = select(Post)
+    
+    
+    if author:
+        statement = statement.where(Post.author == author)
+    
+    statement = statement.limit(limit)
+    
+    # Execute and return
     posts = session.exec(statement).all()
     return posts
 
