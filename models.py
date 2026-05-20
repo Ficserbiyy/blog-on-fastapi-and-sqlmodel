@@ -1,6 +1,6 @@
 from sqlmodel import Field, SQLModel
 from datetime import datetime
-
+from typing import Optional
 
 # Define the Database Model
 class User(SQLModel, table=True):
@@ -12,13 +12,20 @@ class UserCreate(SQLModel):
     username: str
     password: str 
     
-    
-class Post(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    author: str
+    # What user print:
+class PostCreate(SQLModel):
     title: str
     content: str
-    date_posted: str = Field(default_factory=lambda: datetime.utcnow().strftime("%B %d, %Y"))
+    author: str
+    
+    # What post contain:
+class Post(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    title: str
+    content: str
+    author: str
+    views: int = Field(default=0)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 class Userlogin(SQLModel, table=True):

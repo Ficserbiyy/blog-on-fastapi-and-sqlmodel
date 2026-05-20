@@ -1,10 +1,10 @@
 from fastapi import FastAPI, HTTPException, Depends
 from sqlmodel import Field, Session, create_engine, select
 from typing import Final, List
-from datetime import datetime
+#from datetime import datetime
 from PassLogic import verify_password,create_access_token,hash_password,get_session, create_db_and_tables
 from contextlib import asynccontextmanager
-from models import Post, User, UserCreate, Userlogin
+from models import Post, User, UserCreate, Userlogin, PostCreate
 
 
 
@@ -25,12 +25,16 @@ app: Final = FastAPI(lifespan=lifespan)
 # FastAPI Endpoints
 
 @app.post("/posts", response_model=Post)
-def create_post(post: Post, session: Session = Depends(get_session)):
+def create_post(post_in: PostCreate, session: Session = Depends(get_session)):
     """Create a new post and save it to the database."""
-    session.add(post)
+    db_post = Post(**post_in.model_dump())
+    
+    session.add(db_post)
+    
+    session.add(db_post)
     session.commit()
-    session.refresh(post) # Fetch the generated ID from the database
-    return post
+    session.refresh(db_post) # Fetch the generated ID from the database
+    return db_post
 
 
 
