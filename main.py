@@ -68,7 +68,6 @@ def get_posts(
     
     if author:
         statement = statement.where(Post.author == author)
-    
     statement = statement.limit(limit)
     
     # Execute and return
@@ -88,14 +87,26 @@ def get_single_post(post_id: int, session: Session = Depends(get_session)):
 
 
 @app.delete("/posts/{post_id}")
-def delete_post(post_id: int, session: Session = Depends(get_session)):
+def delete_post(
+    post_id: int, 
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     """Delete a specific post from the database."""
     post = session.get(Post, post_id)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
+    
+    if post.author != current_user.username:
+        raise HTTPException(
+            status_code=403, 
+            detail="You are not the author of this post!"
+        )
+    
+    
     session.delete(post)
     session.commit()
-    return {"message": f"Post {post_id} successfully deleted"}
+    return {"message": f"Post successfully deleted"}
 
 
 
