@@ -6,23 +6,39 @@ from PassLogic import verify_password,create_access_token,hash_password,get_sess
 from contextlib import asynccontextmanager
 from models import Post, User, UserCreate, PostRead, PostCreate, PostUpdate
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.middleware.cors import CORSMiddleware
 
-
-# Create tables on Startup
+# lifespan
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # On Startup:
     create_db_and_tables()
     yield
     # On Shutdown:
+    print('Shutdown')
 
 
 app: Final = FastAPI(lifespan=lifespan)
+oauth2_scheme: Final = OAuth2PasswordBearer(tokenUrl="login")
+origins: Final[list] = [
+    "http://localhost",
+    "http://localhost:3000", # Common React port
+    "http://localhost:5173", # Common Vite/Vue port
+    "http://127.0.0.1:5500", # Live Server port
+]
+
+# In real production, use the 'origins' list (not the "*") here:
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],      # CRUD methods
+    allow_headers=["*"]
+)
 
 
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 def get_current_user(token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)):
     """Dependency to get the currently authenticated user."""
@@ -116,7 +132,7 @@ def delete_post(
 
 
 # Accept UserCreate and return User
-@app.post("/register", ) #response_model=User)
+@app.post("/register", ) 
 def register_user(user_in: UserCreate, session: Session = Depends(get_session)):
     """Register a new user with checked password validation."""
     secure_hash = hash_password(user_in.password)
