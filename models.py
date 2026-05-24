@@ -1,8 +1,22 @@
 from sqlmodel import Field, SQLModel, Relationship
 from datetime import datetime
 from typing import Optional
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Define the Database Models
+
+class Settings(BaseSettings):
+    DATABASE_URL: str = ''
+    SECRET_KEY: str = ''
+    ALGORITHM: str = 'HS256'
+    TOKEN_EXPIRE: int = 30
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding='utf-8',
+        extra='ignore',
+        case_sensitive=False
+    )
+settings = Settings() 
 class User(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     username: str = Field(unique=True, index=True) # No duplicate usernames

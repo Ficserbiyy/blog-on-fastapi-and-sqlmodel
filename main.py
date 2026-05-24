@@ -1,8 +1,9 @@
 from fastapi import FastAPI, HTTPException, Depends
-from sqlmodel import Field, Session, create_engine, select
+from sqlmodel import Session, select
 from typing import Final, List
 #from datetime import datetime
-from PassLogic import verify_password,create_access_token,hash_password,get_session, create_db_and_tables, decode_access_token
+from PassLogic import verify_password,create_access_token,hash_password, decode_access_token
+from sqlDatabase import get_session, create_db_and_tables
 from contextlib import asynccontextmanager
 from models import Post, User, UserCreate, PostRead, PostCreate, PostUpdate
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -11,11 +12,9 @@ from fastapi.middleware.cors import CORSMiddleware
 # lifespan
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # On Startup:
-    create_db_and_tables()
+    create_db_and_tables()    # On Startup
     yield
-    # On Shutdown:
-    print('Shutdown')
+    print('Shutdown')         # On Shutdown
 
 
 app: Final = FastAPI(lifespan=lifespan)

@@ -1,29 +1,8 @@
 from fastapi import HTTPException, status, Depends
-from sqlmodel import Field, Session, create_engine, SQLModel
-from typing import Final
-from Config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES # You have to put your own
+from models import settings
 import jwt
 from datetime import datetime, timedelta
 import bcrypt
-
-
-
-
-sqlite_url: Final = f"sqlite:///database.db"
-# connect_args is needed for SQLite to work properly with multi-threaded FastAPI
-engine: Final = create_engine(sqlite_url, connect_args={"check_same_thread": False})
-
-
-
-def get_session():
-    with Session(engine) as session:
-        yield session
-           
-        
-def create_db_and_tables():
-    """Create database tables based on SQLModel schemas."""
-    SQLModel.metadata.create_all(engine)
-        
         
         
 def hash_password(password: str) -> str:
@@ -58,17 +37,17 @@ def create_access_token(data: dict) -> str:
     to_encode = data.copy()
     
     # Calculate when the token expires 
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.utcnow() + timedelta(minutes=settings.TOKEN_EXPIRE)
     to_encode.update({"exp": expire})
     
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
 
 def decode_access_token(token: str) -> str:
     """Decode JWT token and return the username (subject)."""
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         username: str | None = payload.get("sub")
         
         
