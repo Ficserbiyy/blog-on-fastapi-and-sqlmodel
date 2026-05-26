@@ -102,7 +102,9 @@ async def get_posts(
 @app.get("/posts/{post_id}", response_model=PostRead)
 async def get_single_post(post_id: int, session: AsyncSession = Depends(get_session)):
     """Retrieve a single post by its ID."""
-    post = await session.get(Post, post_id)
+    statement = select(Post).where(Post.id == post_id).options(joinedload(Post.owner)) # type: ignore
+    result = await session.execute(statement)
+    post = result.scalars().first()
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
     return post
