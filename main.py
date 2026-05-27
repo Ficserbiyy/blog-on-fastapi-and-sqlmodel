@@ -1,7 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends
-from sqlmodel import Session, select
+from sqlmodel import select
 from typing import Final, List
-#from datetime import datetime
 from PassLogic import verify_password,create_access_token,hash_password, decode_access_token
 from sqlDatabase import get_session, create_db_and_tables, AsyncSession, engine
 from contextlib import asynccontextmanager
@@ -29,7 +28,7 @@ origins: Final[list] = [
     "http://127.0.0.1:5500", # Live Server port
 ]
 
-# In real production, use the 'origins' list (not the "*") here:
+# In real production use the 'origins' list (not the "*") here:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -44,7 +43,6 @@ app.add_middleware(
 
 async def get_current_user(token: str = Depends(oauth2_scheme), session: AsyncSession = Depends(get_session)):
     """Dependency to get the currently authenticated user."""
-    # token contains username so we get it
     username = decode_access_token(token)
     
     # Searching for a user
@@ -82,7 +80,6 @@ async def get_posts(
     session: AsyncSession = Depends(get_session)
 ):
     """Retrieve posts with optional filtering by author and limit."""
-    # Basic @app.get('/posts')
     statement = select(Post).options(joinedload(Post.owner)).limit(limit) # type: ignore
     
     

@@ -41,11 +41,6 @@ class Post(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     owner: "User" = Relationship(back_populates="posts")
 
-class Userlogin(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    username: str
-    password: str
-
 class PostUpdate(SQLModel):
     title: Optional[str] = None
     content: Optional[str] = None

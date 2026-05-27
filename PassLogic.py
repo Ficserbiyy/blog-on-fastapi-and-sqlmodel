@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status, Depends
+from fastapi import HTTPException, status
 from models import settings
 import jwt
 from datetime import datetime, timedelta
