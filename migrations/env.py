@@ -1,5 +1,5 @@
 from logging.config import fileConfig
-from models import SQLModel, settings, User, Post, UserCreate 
+from models import SQLModel, settings
 from sqlalchemy import engine_from_config, pool
 from alembic import context
 # this is the Alembic Config object, which provides
@@ -8,6 +8,8 @@ config = context.config
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 
+import asyncio
+from sqlalchemy.ext.asyncio import async_engine_from_config
 import sys
 import os
 from os.path import abspath, dirname
@@ -75,20 +77,25 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    connectable = engine_from_config(
+    connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
-    with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+    async def do_run_migrations():
+        async with connectable.connect() as connection:
+            await connection.run_sync(do_run_migrations_sync)
 
+    def do_run_migrations_sync(connection):
+        context.configure(
+            connection=connection, 
+            target_metadata=target_metadata
+        )
         with context.begin_transaction():
             context.run_migrations()
-
+            
+    asyncio.run(do_run_migrations())
 
 if context.is_offline_mode():
     run_migrations_offline()
