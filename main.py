@@ -4,7 +4,7 @@ from typing import Final, List
 from PassLogic import verify_password,create_access_token,hash_password, decode_access_token
 from sqlDatabase import get_session, create_db_and_tables, AsyncSession, engine
 from contextlib import asynccontextmanager
-from models import Post, User, UserCreate, PostRead, PostCreate, PostUpdate, PostPatch, UserPublic
+from models import Post, User, UserCreate, PostRead, PostCreate, PostUpdate, PostPatch, UserPublic, UserPatch
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import joinedload
@@ -143,11 +143,11 @@ async def register_user(user_in: UserCreate, session: AsyncSession = Depends(get
         username=user_in.username,
         hashed_password=secure_hash
     )
-    
     session.add(db_user)
     await session.commit()
     await session.refresh(db_user)
     return db_user
+
 
 
 @app.post('/login')
@@ -165,6 +165,7 @@ async def log_in(
 
     token = create_access_token(data={"sub": db_user.username})
     return {"access_token": token, "token_type": "bearer"}
+
 
 
 @app.patch("/posts/{post_id}", response_model=Post)
@@ -193,6 +194,7 @@ async def patch_post(
     return db_post
 
 
+
 @app.put("/posts/{post_id}", response_model=Post)
 async def update_post(
     post_id: int, 
@@ -216,6 +218,7 @@ async def update_post(
     return db_post
 
 
+
 @app.get("/users/{username}", response_model=UserPublic)
 async def get_user_profile(
     search_username: str, 
@@ -230,3 +233,29 @@ async def get_user_profile(
     return db_user
 
 
+
+@app.patch("/users/me", response_model=UserPublic)
+async def update_user_me(
+    user_data: UserPatch,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    update_dict = user_data.model_dump(exclude_unset=True)
+    for key, value in update_dict.items():
+        setattr(current_user, key, value)
+    
+    session.add(current_user)
+    await session.commit()
+    await session.refresh(current_user)
+    return current_user
+
+
+
+@app.delete("/users/me", status_code=204)
+async def delete_current_user(
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user) 
+):
+    await session.delete(current_user)
+    await session.commit()
+    return None
