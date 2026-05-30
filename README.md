@@ -1,10 +1,12 @@
 # Blogging Platform API
-Technology stack: FastAPI, PostgreSQL and SQLModel (async engine), JWT authentication.
+Technology stack: FastAPI, Redis, PostgreSQL and SQLModel (async engine), JWT authentication.
 
 ## Features
 - User registration to create a new user
 - Login endpoint to authenticate the user and generate a token
 - User authorization
+- User profile management
+- Redis-based caching for high-traffic endpoints
   ### User can:
 - Create a new blog post
 
@@ -33,13 +35,15 @@ pip install pyjwt
 pip install bcrypt
 pip install sqlmodel
 pip install asyncpg
+pip install redis
 pip install alembic
 ```
 
-### 3. Launch the PostgreSQL database using [Docker](https://docs.docker.com/get-started/get-docker/):
+### 3. Launch the PostgreSQL database and Redis using [Docker](https://docs.docker.com/get-started/get-docker/):
 ```Bash
                                             # Your password
 docker run --name my-postgres -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres
+docker run --name my-redis -p 6379:6379 -d redis
 ```
 DATABASE_URL must contain **this** password!
 
@@ -49,7 +53,7 @@ SECRET_KEY = "your_key" # Paste your secret key here
 ALGORITHM = "HS256"
 TOKEN_EXPIRE = 30       # Time after which you want the token to become invalid.
 
-DATABASE_URL=postgresql+asyncpg://postgres:password@localhost:5432/postgres
+DATABASE_URL = postgresql+asyncpg://postgres:password@localhost:5432/postgres
 ```
 
 ### 5. Run the Aplication:
