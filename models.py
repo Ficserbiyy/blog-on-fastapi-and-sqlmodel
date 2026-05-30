@@ -20,12 +20,13 @@ class Settings(BaseSettings):
 class User(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     username: str = Field(unique=True, index=True) # No duplicate usernames
-    description: str = ''
+    description: Optional[str] = None
     hashed_password: str
     posts: list["Post"] = Relationship(back_populates="owner" , cascade_delete=True)
+    
 class UserCreate(SQLModel):
     username: str
-    description: str = ''
+    description: Optional[str] = None
     password: str 
     
     # What user print:
@@ -50,7 +51,7 @@ class PostPatch(SQLModel):
 class UserPublic(SQLModel):
     id: int
     username: str
-    description: str
+    description: Optional[str] = None
 
 class PostRead(SQLModel):
     id: int
@@ -64,7 +65,11 @@ class PostUpdate(SQLModel):
     content: str = ''
 
 class UserPatch(SQLModel):
+    username: Optional[str] = None
+    description: Optional[str] = None
+    
+class UserUpdate(SQLModel):
     username: str
-    description: str = ''
+    description: str | None = None
 
 settings = Settings() 
