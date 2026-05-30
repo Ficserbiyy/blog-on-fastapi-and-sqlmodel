@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi import FastAPI, HTTPException, Depends, Request, status
 from sqlmodel import select
 from typing import Final, List
 from PassLogic import verify_password,create_access_token,hash_password, decode_access_token
@@ -70,6 +70,18 @@ async def create_post(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user) 
 ):
+    limit_key = f"limit:posts:{current_user.id}"
+    current_count = await redis_client.incr(limit_key)
+    
+    if current_count == 1:
+        await redis_client.expire(limit_key, 60)
+    
+    if current_count > 5:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many requests"
+        )
+        
     if current_user.id is None:
         raise HTTPException(status_code=500, detail="User ID is missing")
     db_post = Post(**post_in.model_dump(), owner_id=current_user.id)
